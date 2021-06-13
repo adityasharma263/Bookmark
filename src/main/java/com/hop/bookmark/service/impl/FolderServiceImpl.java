@@ -3,6 +3,7 @@ package com.hop.bookmark.service.impl;
 import com.hop.bookmark.dao.BookmarkDao;
 import com.hop.bookmark.dao.FolderDao;
 import com.hop.bookmark.dto.FolderData;
+import com.hop.bookmark.model.BookmarkModel;
 import com.hop.bookmark.model.FolderModel;
 import com.hop.bookmark.service.FolderService;
 import org.modelmapper.ModelMapper;
@@ -101,8 +102,13 @@ public class FolderServiceImpl implements FolderService {
         Optional<FolderModel> folderModel =  folderDao.findById(folderId);
         if(folderModel.isPresent()) {
             deleteInDepth(folderDao.findByParentId(folderId));
+            List<BookmarkModel> bookmarkModels = bookmarkDao.findAllByFolders_Id(folderId);
+            for(BookmarkModel bookmark : bookmarkModels)
+            {
+                bookmark.getFolders().remove(folderModel.get());
+                bookmarkDao.save(bookmark);
+            }
             folderDao.deleteById(folderId);
-            bookmarkDao.deleteAll(bookmarkDao.findAllByFolders_Id(folderId));
             return convertToDto(folderModel.get());
         }
        return null;
@@ -116,9 +122,13 @@ public class FolderServiceImpl implements FolderService {
         }
         for(FolderModel folderModel : folderModelList){
             deleteInDepth(folderDao.findByParentId(folderModel.getId()));
+            List<BookmarkModel> bookmarkModels = bookmarkDao.findAllByFolders_Id(folderModel.getId());
+            for(BookmarkModel bookmark : bookmarkModels)
+            {
+                bookmark.getFolders().remove(folderModel);
+                bookmarkDao.save(bookmark);
+            }
             folderDao.deleteById(folderModel.getId());
-            bookmarkDao.deleteAll(bookmarkDao.findAllByFolders_Id(folderModel.getId()));
-
         }
     }
 
